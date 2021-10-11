@@ -5,7 +5,9 @@ import Navbar from './components/Navbar';
 import EspacioTiempo from './components/espacio-temporal';
 import {BrowserRouter as Router} from 'react-router-dom';
 import Tabla from './components/tabla';
-import Agrupamiento from './components/agrupamiento';
+import Agrupamientokmeans from './components/agrupamiento-kmeans';
+import Agrupamientojerarquico from './components/agrupamiento-jerarquico';
+import Agrupamientodbscan from './components/agrupamiento-dbscan';
 
 function App(){
 
@@ -40,7 +42,15 @@ function App(){
       <section className="contenido wrapper">
         <EspacioTiempo pasarDatos={pasarDatos}/>
         <Tabla estado={state}></Tabla>
-        <Agrupamiento estado={state}/>
+        {state.algoritmo===0 && (
+          <Agrupamientokmeans estado={state}/>
+        )}
+        {state.algoritmo===1 && (
+          <Agrupamientojerarquico estado={state}/>
+        )}
+        {state.algoritmo===2 && (
+          <Agrupamientodbscan estado={state}/>
+        )}
       </section>      
     </Router>
   );
