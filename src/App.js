@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import EspacioTiempo from './components/espacio-temporal';
 import {BrowserRouter as Router} from 'react-router-dom';
 import Tabla from './components/tabla';
+import Agrupamiento from './components/agrupamiento';
 
 function App(){
 
@@ -15,7 +16,8 @@ function App(){
     departamentos: ['Todos','Amazonas','Áncash','Apurímac','Arequipa','Ayacucho','Cajamarca','Callao','Cusco',
     'Huancavelica','Huánuco','Ica','Junín','La Libertad','Lambayeque','Lima','Loreto','Madre de Dios',
     'Moquegua','Pasco','Piura','Puno','San Martín','Tacna','Tumbes','Ucayali'],
-    valor:0
+    valor:0,
+    agrupamiento:0
   })
 
   const pasarDatos = (e) => {
@@ -24,7 +26,8 @@ function App(){
       fechaFin: e.fechaFin,
       algoritmo: e.algoritmo,
       departamentos: e.departamentos,
-      valor:1
+      valor:1,
+      agrupamiento:1
     })
   }
 
@@ -37,6 +40,7 @@ function App(){
       <section className="contenido wrapper">
         <EspacioTiempo pasarDatos={pasarDatos}/>
         <Tabla estado={state}></Tabla>
+        <Agrupamiento estado={state}/>
       </section>      
     </Router>
   );
