@@ -4,7 +4,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { Box,Grid } from '@material-ui/core';
 import { Typography } from '@material-ui/core';
 import Slider from 'react-input-slider';
-import {Kmeans} from './graficos';
+import {Dbscan} from './graficos';
 import Axios from 'axios';
 import Cargando from './cargando';
 import Paper from '@material-ui/core/Paper';
@@ -119,14 +119,41 @@ const Agrupamientodbscan = (props) => {
     const [cargando, setCargando] = React.useState(true);
     const [bandera, setBandera] = React.useState(false);
 
+    React.useEffect(() => {
+      Axios.post(`http://localhost:8000/graficokmeans/?${params}`,deps).then((response) => {
+          const val1 = response.data
+          if(val1 === 'No hay datos'){
+              setBandera(true)
+          }else{
+              setBandera(false)
+              const item= JSON.parse(val1[0])
+              setDatos(val1[1])
+              window.Bokeh.embed.embed_item(item, 'graficokmeans')
+              setCargando(false);
+          }
+      }).catch((err) => console.log(err));
+      // eslint-disable-next-line
+    }, []);
 
-    if (props.estado.agrupamiento===1){
+    if (props.estado.valor===1){
         const fechaIni=convert(props.estado.fechaIni);
         const fechaFin=convert(props.estado.fechaFin);
         const deps=props.estado.departamentos;
         const params=`fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${6}`
         setCargando(true);
-        props.estado.agrupamiento=0
+        Axios.post(`http://localhost:8000/graficokmeans/?${params}`,deps).then((response) => {
+            const val1=response.data;
+            if(val1 === 'No hay datos'){
+                setBandera(true)
+            }else{
+                setBandera(false)
+                const item= JSON.parse(val1[0])
+                setDatos(val1[1])
+                window.Bokeh.embed.embed_item(item, 'graficokmeans')
+                setCargando(false);
+            }
+        }).catch((err) => console.log(err));
+        props.estado.valor=0
       }
 
       const [state, setState] = React.useState({x:6});
@@ -159,12 +186,136 @@ const Agrupamientodbscan = (props) => {
         const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
         const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'Datos_Kmeans_Secuencias_Genomicas_SARS_COV_2' + fileExtension);
+        FileSaver.saveAs(data, 'Datos_dbscan_Secuencias_Genomicas_SARS_COV_2' + fileExtension);
       };
 
     return (
         <Grid container>
-
+            {!bandera && (
+            <Grid item xs={12} sm={12}>
+                <Box className={classes.paper1} boxShadow={0} height={750}>
+                    <Typography 
+                        variant= "h6"
+                        align= "center"
+                        className={classes.bold}>
+                        Agrupamiento de secuencias genómicas SARS-CoV-2 con DBSCAN
+                    </Typography>
+                    <Grid container>
+                        <Grid item xs={6} sm={7} className={classes.grid}>
+                            <Typography 
+                                variant= "subtitle1"
+                                align= "left"
+                                className={classes.bold}>
+                                Filtro por epsilon
+                            </Typography>
+                            <p>Se puede utilizar el control deslizante para filtrar por el valor de epsilon. Deslizar el control deslizante hasta el valor de epsilon deseado para ajustar la densidad o separación de los puntos de las secuencias genómicas que pertenecen a cada grupo.</p>
+                            <p>Valor de epsilon: {state.x}</p>
+                            <div>
+                            <Slider
+                                style={{width: "800px"}}
+                                className={classes.slider}
+                                axis="x"
+                                x={state.x}
+                                xmax={6}
+                                xmin={1}
+                                onChange={updateRange}
+                                onDragEnd={range}
+                            />
+                            </div>
+                            {cargando && (
+                                <Cargando />
+                            )}
+                            {!cargando && (
+                                <Dbscan id='graficokmeans' className="bk-root"></Dbscan>
+                            )}
+                        </Grid>
+                        <Grid item xs={6} sm={5} className={classes.grid2}>
+                            <Typography 
+                                variant= "subtitle1"
+                                align= "left"
+                                className={classes.bold}>
+                                Datos de las secuencias genómicas
+                            </Typography>
+                            <p className={classes.p}>Se muestra la información de las secuencias genómicas agrupadas con el algoritmo DBSCAN en el gráfico de la izquierda.</p>
+                            <Grid container justifyContent="space-between">
+                                <Btn onClick={exportToCSV} className={classes.download}>
+                                    Descargar datos
+                                    <img className={classes.imagen} src={download} alt=''/>
+                                </Btn>
+                            </Grid>
+                            {cargando && (
+                                <Cargando />
+                            )}
+                            {!cargando && (
+                            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                                <TableContainer sx={{ maxHeight: 440 }}>
+                                    <Table stickyHeader aria-label="sticky table">
+                                    <TableHead>
+                                        <TableRow>
+                                        {columns.map((column) => (
+                                            <TableCell
+                                            key={column.id}
+                                            align={column.align}
+                                            style={{ minWidth: column.minWidth }}
+                                            >
+                                            {column.label}
+                                            </TableCell>
+                                        ))}
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {datos
+                                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                        .map((row) => {
+                                            return (
+                                            <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
+                                                {columns.map((column) => {
+                                                const value = row[column.id];
+                                                return (
+                                                    <TableCell key={column.id} align={column.align}>
+                                                    {column.format && typeof value === 'number'
+                                                        ? column.format(value)
+                                                        : value}
+                                                    </TableCell>
+                                                );
+                                                })}
+                                            </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            </Paper>
+                            )}
+                            {!cargando && (
+                                <Grid container justifyContent="space-between">
+                                    <TablePagination
+                                        className="mx-auto"
+                                        labelRowsPerPage={""}
+                                        rowsPerPageOptions={[]}
+                                        component="div"
+                                        count={datos.length}
+                                        labelDisplayedRows={
+                                        ({ from, to, count }) => {
+                                            return '' + from + '-' + to + ' de ' + count
+                                        }
+                                        }
+                                        rowsPerPage={rowsPerPage}
+                                        page={page}
+                                        onPageChange={handleChangePage}
+                                        onRowsPerPageChange={handleChangeRowsPerPage}
+                                    />
+                                </Grid>
+                            )}
+                        </Grid>
+                    </Grid>
+                </Box>                
+            </Grid>
+            )}
+            {bandera && (
+                <Box>
+                </Box>
+            )}
         </Grid>
     )
 }

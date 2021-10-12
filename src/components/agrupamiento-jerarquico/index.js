@@ -64,7 +64,7 @@ const useStyles = makeStyles((theme) => ({
         margin: '20px'
     },
     slider:{
-        width: '800px',
+        width: '600px',
     },
     p:{
         marginBottom: '0px',
@@ -119,16 +119,65 @@ const Agrupamientojerarquico = (props) => {
     const [cargando, setCargando] = React.useState(true);
     const [bandera, setBandera] = React.useState(false);
 
+    React.useEffect(() => {
+      Axios.post(`http://localhost:8000/graficojerarquico/?${params}`,deps).then((response) => {
+          const val1 = response.data
+          if(val1 === 'No hay datos'){
+              setBandera(true)
+          }else{
+              setBandera(false)
+              const item= JSON.parse(val1[0])
+              setDatos(val1[1])
+              window.Bokeh.embed.embed_item(item, 'graficojerarquico')
+              setCargando(false);
+          }
+      }).catch((err) => console.log(err));
+      // eslint-disable-next-line
+  }, []);
 
+  const [dendrograma,setDendrograma]=React.useState({isLoaded:false,content:'a'});
+  const [cargandodendrograma,setCargandodendrograma]=React.useState(true);
+  const payload = {};
 
-    if (props.estado.agrupamiento===1){
+    fetch(`http://localhost:8000/dendrograma/?${params}`,deps,{
+      method: "POST",
+      headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+  })
+      .then((response) => {
+          return response.text();
+      })
+      .then((text) => {
+          setDendrograma({
+              isLoaded: true,
+              content: `${text}`
+          });
+          setCargandodendrograma(false);
+      });
+
+  console.log(props.estado.valor,props.estado.algoritmo);
+
+    if (props.estado.valor===1){
         const fechaIni=convert(props.estado.fechaIni);
         const fechaFin=convert(props.estado.fechaFin);
         const deps=props.estado.departamentos;
         const params=`fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${6}`
         setCargando(true);
-
-        props.estado.agrupamiento=0
+        Axios.post(`http://localhost:8000/graficojerarquico/?${params}`,deps).then((response) => {
+            const val1=response.data;
+            if(val1 === 'No hay datos'){
+                setBandera(true)
+            }else{
+                setBandera(false)
+                const item= JSON.parse(val1[0])
+                setDatos(val1[1])
+                window.Bokeh.embed.embed_item(item, 'graficojerarquico')
+                setCargando(false);
+            }
+        }).catch((err) => console.log(err));
       }
 
       const [state, setState] = React.useState({x:6});
@@ -141,7 +190,7 @@ const Agrupamientojerarquico = (props) => {
       };
 
     const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(7);
+    const [rowsPerPage, setRowsPerPage] = React.useState(8);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -166,7 +215,137 @@ const Agrupamientojerarquico = (props) => {
 
     return (
         <Grid container>
+            {!bandera && (
+            <Grid item xs={12} sm={12}>
+                <Box className={classes.paper1} boxShadow={0} height={750}>
+                    <Typography 
+                        variant= "h6"
+                        align= "center"
+                        className={classes.bold}>
+                        Agrupamiento de secuencias genómicas SARS-CoV-2 con K-means
+                    </Typography>
+                    <Grid container>
+                        <Grid item xs={6} sm={6} className={classes.grid}>
+                            <Typography 
+                                variant= "subtitle1"
+                                align= "left"
+                                className={classes.bold}>
+                                Filtro por clusters
+                            </Typography>
+                            <p>Se puede utilizar el control deslizante para filtrar por grupos. Deslizar el control deslizante hasta el número de clusters o grupos deseados para mostrar las secuencias genómicas que pertenecen a ese grupo.</p>
+                            <div>
+                            <Slider
+                                style={{width: "800px"}}
+                                className={classes.slider}
+                                axis="x"
+                                x={state.x}
+                                xmax={6}
+                                xmin={1}
+                                onChange={updateRange}
+                                onDragEnd={range}
+                            />
+                            </div>
+                            {cargando && (
+                                <Cargando />
+                            )}
+                            {!cargando && (
+                                <Jerarquico id='graficojerarquico' className="bk-root"></Jerarquico>
+                            )}
+                        </Grid>
+                        <Grid item xs={6} sm={6} className={classes.grid2}>
+                            <Typography 
+                                variant= "subtitle1"
+                                align= "left"
+                                className={classes.bold}>
+                                Dendrograma
+                            </Typography>
 
+                          </Grid>
+                    </Grid>
+                </Box>                
+            </Grid>
+            )}
+            {bandera && (
+                <Box>
+                </Box>
+            )}
+            {!bandera && (
+            <Grid item xs={12} sm={12}>
+              <Box className={classes.paper2} boxShadow={0} height={580}>
+                <Grid container justifyContent="space-between">
+                  <Typography 
+                    variant= "h6"
+                    align= "left"
+                    className={classes.bold}>
+                    Datos de las secuencias genómicas SARS-CoV-2
+                  </Typography>
+                  <Btn onClick={exportToCSV}>
+                    Descargar datos
+                    <img className={classes.imagen} src={download} alt=''/>
+                  </Btn>
+                </Grid>
+                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                  <TableContainer sx={{ maxHeight: 440 }}>
+                      <Table stickyHeader aria-label="sticky table">
+                      <TableHead>
+                          <TableRow>
+                          {columns.map((column) => (
+                              <TableCell
+                              key={column.id}
+                              align={column.align}
+                              style={{ minWidth: column.minWidth }}
+                              >
+                              {column.label}
+                              </TableCell>
+                          ))}
+                          </TableRow>
+                      </TableHead>
+                      <TableBody>
+                          {datos
+                          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                          .map((row) => {
+                              return (
+                              <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
+                                  {columns.map((column) => {
+                                  const value = row[column.id];
+                                  return (
+                                      <TableCell key={column.id} align={column.align}>
+                                      {column.format && typeof value === 'number'
+                                          ? column.format(value)
+                                          : value}
+                                      </TableCell>
+                                  );
+                                  })}
+                              </TableRow>
+                              );
+                          })}
+                      </TableBody>
+                      </Table>
+                  </TableContainer>
+                </Paper>
+                <TablePagination
+                  className="mx-auto"
+                  labelRowsPerPage={""}
+                  rowsPerPageOptions={[]}
+                  component="div"
+                  count={datos.length}
+                  labelDisplayedRows={
+                  ({ from, to, count }) => {
+                      return '' + from + '-' + to + ' de ' + count
+                  }
+                  }
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+              />
+              </Box>
+          </Grid>
+          )}
+          {bandera && (
+              <Box>
+              </Box>
+          )}
         </Grid>
     )
 }

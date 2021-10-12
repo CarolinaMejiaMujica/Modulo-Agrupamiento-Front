@@ -135,7 +135,7 @@ const Agrupamientokmeans = (props) => {
         // eslint-disable-next-line
     }, []);
 
-    if (props.estado.agrupamiento===1){
+    if (props.estado.valor===1){
         const fechaIni=convert(props.estado.fechaIni);
         const fechaFin=convert(props.estado.fechaFin);
         const deps=props.estado.departamentos;
@@ -153,7 +153,7 @@ const Agrupamientokmeans = (props) => {
                 setCargando(false);
             }
         }).catch((err) => console.log(err));
-        props.estado.agrupamiento=0
+        props.estado.valor=0
       }
 
       const [state, setState] = React.useState({x:6});

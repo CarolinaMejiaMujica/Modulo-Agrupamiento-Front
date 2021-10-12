@@ -19,7 +19,9 @@ function App(){
     'Huancavelica','Huánuco','Ica','Junín','La Libertad','Lambayeque','Lima','Loreto','Madre de Dios',
     'Moquegua','Pasco','Piura','Puno','San Martín','Tacna','Tumbes','Ucayali'],
     valor:0,
-    agrupamiento:0
+    agrupamiento:0,
+    agrupamientoj:0,
+    agrupamientod:0
   })
 
   const pasarDatos = (e) => {
@@ -29,7 +31,9 @@ function App(){
       algoritmo: e.algoritmo,
       departamentos: e.departamentos,
       valor:1,
-      agrupamiento:1
+      agrupamiento: e.algoritmo===0?1:0,
+      agrupamientoj: e.algoritmo===1?1:0,
+      agrupamientod: e.algoritmo===2?1:0
     })
   }
 
