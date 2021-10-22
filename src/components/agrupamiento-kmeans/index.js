@@ -1,6 +1,5 @@
 import React from "react";
 import "date-fns";
-import { makeStyles } from "@material-ui/core/styles";
 import { Box, Grid } from "@material-ui/core";
 import { Typography } from "@material-ui/core";
 //import Slider from "react-input-slider";
@@ -15,6 +14,13 @@ import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TablePagination from "@material-ui/core/TablePagination";
 import TableRow from "@material-ui/core/TableRow";
+import PropTypes from "prop-types";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
+import IconButton from "@material-ui/core/IconButton";
+import FirstPageIcon from "@material-ui/icons/FirstPage";
+import KeyboardArrowLeft from "@material-ui/icons/KeyboardArrowLeft";
+import KeyboardArrowRight from "@material-ui/icons/KeyboardArrowRight";
+import LastPageIcon from "@material-ui/icons/LastPage";
 import download from "../tabla/descargar.png";
 import { Btn } from "../tabla/descargarboton";
 import * as FileSaver from "file-saver";
@@ -59,16 +65,29 @@ const useStyles = makeStyles((theme) => ({
     color: "#0000",
   },
   download: {
-    marginTop: "10px",
     paddingLeft: "5px",
+    marginTop: "20px",
     marginLeft: "0px",
-    margin: "20px",
+    marginBottom: "20px",
   },
   slider: {
     marginLeft: "20px",
   },
   p: {
-    marginBottom: "0px",
+    marginRight: "10px",
+  },
+  pagination: {
+    paddingLeft: "800px",
+  },
+  container: {
+    maxHeight: 440,
+  },
+}));
+
+const useStyles1 = makeStyles((theme) => ({
+  root: {
+    flexShrink: 0,
+    marginLeft: theme.spacing(2.5),
   },
 }));
 
@@ -110,6 +129,76 @@ function valueLabelFormat(value) {
   return `${scaledValue} clusters`;
 }
 
+function TablePaginationActions(props) {
+  const classes = useStyles1();
+  const theme = useTheme();
+  const { count, page, rowsPerPage, onPageChange } = props;
+
+  const handleFirstPageButtonClick = (event) => {
+    onPageChange(event, 0);
+  };
+
+  const handleBackButtonClick = (event) => {
+    onPageChange(event, page - 1);
+  };
+
+  const handleNextButtonClick = (event) => {
+    onPageChange(event, page + 1);
+  };
+
+  const handleLastPageButtonClick = (event) => {
+    onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
+  };
+
+  return (
+    <div className={classes.root}>
+      <IconButton
+        onClick={handleFirstPageButtonClick}
+        disabled={page === 0}
+        aria-label="Primera página"
+      >
+        {theme.direction === "rtl" ? <LastPageIcon /> : <FirstPageIcon />}
+      </IconButton>
+      <IconButton
+        onClick={handleBackButtonClick}
+        disabled={page === 0}
+        aria-label="previous page"
+      >
+        {theme.direction === "rtl" ? (
+          <KeyboardArrowRight />
+        ) : (
+          <KeyboardArrowLeft />
+        )}
+      </IconButton>
+      <IconButton
+        onClick={handleNextButtonClick}
+        disabled={page >= Math.ceil(count / rowsPerPage) - 1}
+        aria-label="Siguiente página"
+      >
+        {theme.direction === "rtl" ? (
+          <KeyboardArrowLeft />
+        ) : (
+          <KeyboardArrowRight />
+        )}
+      </IconButton>
+      <IconButton
+        onClick={handleLastPageButtonClick}
+        disabled={page >= Math.ceil(count / rowsPerPage) - 1}
+        aria-label="Última página"
+      >
+        {theme.direction === "rtl" ? <FirstPageIcon /> : <LastPageIcon />}
+      </IconButton>
+    </div>
+  );
+}
+
+TablePaginationActions.propTypes = {
+  count: PropTypes.number.isRequired,
+  onPageChange: PropTypes.func.isRequired,
+  page: PropTypes.number.isRequired,
+  rowsPerPage: PropTypes.number.isRequired,
+};
+
 const Agrupamientokmeans = ({ estado, kmeans }) => {
   const classes = useStyles();
 
@@ -119,17 +208,26 @@ const Agrupamientokmeans = ({ estado, kmeans }) => {
     var day = ("0" + date.getDate()).slice(-2);
     return [date.getFullYear(), mnth, day].join("-");
   }
+
   const fechaIni = convert(estado.fechaIni);
   const fechaFin = convert(estado.fechaFin);
   const deps = estado.departamentos;
-  const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${6}`;
+  //const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${value}`;
 
   const [datos, setDatos] = React.useState([]);
   const [cargando, setCargando] = React.useState(true);
   const [bandera, setBandera] = React.useState(false);
 
+  const [value, setValue] = React.useState(6);
+  const handleChange = (event, newValue) => {
+    if (typeof newValue === "number") {
+      setValue(newValue);
+    }
+  };
+
   const grafkmeans = () => {
     setCargando(true);
+    const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${value}`;
     Axios.post(`http://localhost:8000/graficokmeans/?${params}`, deps)
       .then((response) => {
         const val1 = response.data;
@@ -151,11 +249,12 @@ const Agrupamientokmeans = ({ estado, kmeans }) => {
 
   React.useEffect(() => {
     grafkmeans();
+    console.log(value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kmeans]);
+  }, [kmeans, value]);
 
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(7);
+  const [rowsPerPage, setRowsPerPage] = React.useState(8);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -181,25 +280,17 @@ const Agrupamientokmeans = ({ estado, kmeans }) => {
     );
   }
 
-  const [value, setValue] = React.useState(6);
-
-  const handleChange = (event, newValue) => {
-    if (typeof newValue === "number") {
-      setValue(newValue);
-      console.log(newValue);
-    }
-  };
-
   return (
     <Grid container>
       {!bandera && (
         <Grid item xs={12} sm={12}>
-          <Box className={classes.paper1} boxShadow={0} height={750}>
+          <Box className={classes.paper1} boxShadow={0} height={850}>
             <Typography variant="h6" align="center" className={classes.bold}>
-              Agrupamiento de secuencias genómicas SARS-CoV-2 con K-means
+              Agrupamiento de secuencias genómicas SARS-CoV-2 con Algoritmo
+              K-means
             </Typography>
             <Grid container>
-              <Grid item xs={6} sm={7} className={classes.grid}>
+              <Grid item xs={6} sm={8} className={classes.grid}>
                 <Typography
                   variant="subtitle1"
                   align="left"
@@ -207,7 +298,7 @@ const Agrupamientokmeans = ({ estado, kmeans }) => {
                 >
                   Filtro por clusters
                 </Typography>
-                <p>
+                <p className={classes.p}>
                   Se puede utilizar el control deslizante para filtrar por
                   grupos. Deslizar el control deslizante hasta el número de
                   grupo deseado para mostrar las secuencias genómicas que
@@ -235,7 +326,7 @@ const Agrupamientokmeans = ({ estado, kmeans }) => {
                   <Kmeans id="graficokmeans" className="bk-root"></Kmeans>
                 )}
               </Grid>
-              <Grid item xs={6} sm={5} className={classes.grid2}>
+              <Grid item xs={6} sm={4} className={classes.grid2}>
                 <Typography
                   variant="subtitle1"
                   align="left"
@@ -248,18 +339,21 @@ const Agrupamientokmeans = ({ estado, kmeans }) => {
                   agrupadas con el algoritmo k-means en el gráfico de la
                   izquierda.
                 </p>
-                <Grid container justifyContent="space-between">
-                  {!cargando && (
+                {!cargando && (
+                  <Grid container justifyContent="space-between">
                     <Btn onClick={exportToCSV} className={classes.download}>
                       Descargar datos
                       <img className={classes.imagen} src={download} alt="" />
                     </Btn>
-                  )}
-                </Grid>
+                    <div style={{ paddingTop: "15px" }}>
+                      (*) Identificador en la base de datos GISAID.
+                    </div>
+                  </Grid>
+                )}
                 {cargando && <Cargando />}
                 {!cargando && (
                   <Paper sx={{ width: "100%", overflow: "hidden" }}>
-                    <TableContainer sx={{ maxHeight: 440 }}>
+                    <TableContainer sx={{ maxHeight: 550 }}>
                       <Table stickyHeader aria-label="sticky table">
                         <TableHead>
                           <TableRow>
@@ -311,22 +405,21 @@ const Agrupamientokmeans = ({ estado, kmeans }) => {
                   </Paper>
                 )}
                 {!cargando && (
-                  <Grid container justifyContent="space-between">
-                    <TablePagination
-                      className="mx-auto"
-                      labelRowsPerPage={""}
-                      rowsPerPageOptions={[]}
-                      component="div"
-                      count={datos.length}
-                      labelDisplayedRows={({ from, to, count }) => {
-                        return "" + from + "-" + to + " de " + count;
-                      }}
-                      rowsPerPage={rowsPerPage}
-                      page={page}
-                      onPageChange={handleChangePage}
-                      onRowsPerPageChange={handleChangeRowsPerPage}
-                    />
-                  </Grid>
+                  <TablePagination
+                    className="mx-auto"
+                    labelRowsPerPage={""}
+                    rowsPerPageOptions={[]}
+                    component="div"
+                    count={datos.length}
+                    labelDisplayedRows={({ from, to, count }) => {
+                      return "" + from + "-" + to + " de " + count;
+                    }}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                    ActionsComponent={TablePaginationActions}
+                  ></TablePagination>
                 )}
               </Grid>
             </Grid>

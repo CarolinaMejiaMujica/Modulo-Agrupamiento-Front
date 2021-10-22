@@ -7,7 +7,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 import Tabla from "./components/tabla";
 import Agrupamientokmeans from "./components/agrupamiento-kmeans";
 import Agrupamientojerarquico from "./components/agrupamiento-jerarquico";
-//import Agrupamientodbscan from './components/agrupamiento-dbscan';
+import Agrupamientodbscan from "./components/agrupamiento-dbscan";
 import DateFnsUtils from "@date-io/date-fns";
 import { makeStyles } from "@material-ui/core/styles";
 import Select from "@material-ui/core/Select";
@@ -178,6 +178,10 @@ function App() {
   const [jerarquico, setJerarquico] = React.useState(false);
   const [dbscan, setDbscan] = React.useState(false);
   const [tabla, setTabla] = React.useState(false);
+
+  const [mostrarkmeans, setMostrarKmeans] = React.useState(false);
+  const [mostrarjerarquico, setMostrarJerarquico] = React.useState(false);
+  const [mostrardbscan, setMostrarDbscan] = React.useState(false);
   //const {pasarDatos} = props;
   const [isDisabled, setisDisabled] = React.useState(true);
 
@@ -285,9 +289,23 @@ function App() {
         setState((s) => ({ ...s, cargandoCircular: false }));
       })
       .catch((err) => console.log(err));
-    setKmeans(kmeans ? false : true);
-    setDbscan(dbscan ? false : true);
-    setJerarquico(jerarquico ? false : true);
+
+    if (state.algoritmo === 0) {
+      setKmeans(kmeans ? false : true);
+      setMostrarKmeans(true);
+      setMostrarJerarquico(false);
+      setMostrarDbscan(false);
+    } else if (state.algoritmo === 1) {
+      setJerarquico(jerarquico ? false : true);
+      setMostrarKmeans(false);
+      setMostrarJerarquico(true);
+      setMostrarDbscan(false);
+    } else if (state.algoritmo === 2) {
+      setDbscan(dbscan ? false : true);
+      setMostrarKmeans(false);
+      setMostrarJerarquico(false);
+      setMostrarDbscan(true);
+    }
     setTabla(tabla ? false : true);
   };
 
@@ -419,8 +437,11 @@ function App() {
           item3={item3}
         />
         <Tabla estado={state} tabla={tabla}></Tabla>
-        <Agrupamientokmeans estado={state} kmeans={kmeans} />
-        <Agrupamientojerarquico estado={state} jerarquico={jerarquico} />
+        {mostrarkmeans && <Agrupamientokmeans estado={state} kmeans={kmeans} />}
+        {mostrarjerarquico && (
+          <Agrupamientojerarquico estado={state} jerarquico={jerarquico} />
+        )}
+        {mostrardbscan && <Agrupamientodbscan estado={state} dbscan={dbscan} />}
       </section>
     </Router>
   );

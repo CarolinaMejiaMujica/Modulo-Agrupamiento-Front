@@ -225,10 +225,12 @@ const Tabla = ({ estado, tabla }) => {
             <Typography variant="h6" align="left" className={classes.bold}>
               Datos de las secuencias genómicas SARS-CoV-2
             </Typography>
-            <Btn onClick={exportToCSV}>
-              Descargar datos
-              <img className={classes.imagen} src={download} alt="" />
-            </Btn>
+            {!cargando && (
+              <Btn onClick={exportToCSV}>
+                Descargar datos
+                <img className={classes.imagen} src={download} alt="" />
+              </Btn>
+            )}
           </Grid>
           {cargando && <Cargando />}
           {!cargando && (
