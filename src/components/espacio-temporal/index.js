@@ -5,6 +5,7 @@ import { Box, Grid } from "@material-ui/core";
 import { Typography } from "@material-ui/core";
 import { Mapa, Tiempo } from "./graficos";
 import Cargando from "./cargando";
+import Axios from "axios";
 /*import {
   MuiPickersUtilsProvider,
   KeyboardDatePicker,
@@ -90,14 +91,90 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const EspacioTiempo = ({ estado, item1, item2, item3 }) => {
+const EspacioTiempo = ({ estado, grafico }) => {
   const classes = useStyles();
-  const { cargandoCircular, cargandoLineal, cargandoMapa, bandera } = estado;
+
+  function convert(str) {
+    var date = new Date(str);
+    var mnth = ("0" + (date.getMonth() + 1)).slice(-2);
+    var day = ("0" + date.getDate()).slice(-2);
+    return [date.getFullYear(), mnth, day].join("-");
+  }
+
+  const fechaIni = convert(estado.fechaIni);
+  const fechaFin = convert(estado.fechaFin);
+  const deps = estado.departamentos;
+  //const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${value}`;
+
+  const [bandera, setBandera] = React.useState(false);
+  const [cargandoCircular, setCargandoCircular] = React.useState(true);
+  const [cargandoLineal, setCargandoLineal] = React.useState(true);
+  const [cargandoMapa, setCargandoMapa] = React.useState(true);
+
+  //const { cargandoCircular, cargandoLineal, cargandoMapa, bandera } = estado;
+
+  const graficos = () => {
+    setCargandoCircular(true);
+    setCargandoLineal(true);
+    setCargandoMapa(true);
+    const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}`;
+    Axios.post(`http://localhost:8000/graficolineal/?${params}`, deps)
+      .then((response) => {
+        const val1 = response.data;
+        if (val1 === "No hay datos") {
+          setBandera(true);
+        } else {
+          setBandera(false);
+          const item = JSON.parse(val1);
+          const element = document.getElementById("graficolineal");
+          if (element) element.removeChild(element.firstChild);
+          window.Bokeh.embed.embed_item(item, "graficolineal");
+          setCargandoLineal(false);
+        }
+      })
+      .catch((err) => console.log(err));
+    Axios.post(`http://localhost:8000/mapa/?${params}`, deps)
+      .then((response) => {
+        const val1 = response.data;
+        if (val1 === "No hay datos") {
+          setBandera(true);
+        } else {
+          setBandera(false);
+          const item = JSON.parse(val1);
+          const element = document.getElementById("mapa");
+          if (element) element.removeChild(element.firstChild);
+          window.Bokeh.embed.embed_item(item, "mapa");
+          setCargandoMapa(false);
+        }
+      })
+      .catch((err) => console.log(err));
+    Axios.post(`http://localhost:8000/graficocircular/?${params}`, deps)
+      .then((response) => {
+        const val1 = response.data;
+        if (val1 === "No hay datos") {
+          setBandera(true);
+        } else {
+          setBandera(false);
+          const item = JSON.parse(val1);
+          const element = document.getElementById("graficocircular");
+          if (element) element.removeChild(element.firstChild);
+          window.Bokeh.embed.embed_item(item, "graficocircular");
+          setCargandoCircular(false);
+        }
+      })
+      .catch((err) => console.log(err));
+    // eslint-disable-next-line
+  };
 
   React.useEffect(() => {
+    graficos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grafico]);
+
+  /*React.useEffect(() => {
     if (item1) {
       const element = document.getElementById("graficolineal");
-      if (element) element.removeChild(element.firstChild);
+      //if (element) element.removeChild(element.firstChild);
       window.Bokeh.embed.embed_item(item1, "graficolineal");
     }
   }, [item1]);
@@ -105,7 +182,7 @@ const EspacioTiempo = ({ estado, item1, item2, item3 }) => {
   React.useEffect(() => {
     if (item2) {
       const element = document.getElementById("mapa");
-      if (element) element.removeChild(element.firstChild);
+      //if (element) element.removeChild(element.firstChild);
       window.Bokeh.embed.embed_item(item2, "mapa");
     }
   }, [item2]);
@@ -113,10 +190,10 @@ const EspacioTiempo = ({ estado, item1, item2, item3 }) => {
   React.useEffect(() => {
     if (item3) {
       const element = document.getElementById("graficocircular");
-      if (element) element.removeChild(element.firstChild);
+      //if (element) element.removeChild(element.firstChild);
       window.Bokeh.embed.embed_item(item3, "graficocircular");
     }
-  }, [item3]);
+  }, [item3]);*/
 
   /*const click = React.useCallback(()=>{
       if (pasarDatos){

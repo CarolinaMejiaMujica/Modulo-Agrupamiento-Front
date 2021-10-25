@@ -1,13 +1,13 @@
 import React from "react";
 import "./App.css";
 import { Helmet } from "react-helmet";
-import Navbar from "./components/Navbar";
 import EspacioTiempo from "./components/espacio-temporal";
-import { BrowserRouter as Router } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Tabla from "./components/tabla";
 import Agrupamientokmeans from "./components/agrupamiento-kmeans";
 import Agrupamientojerarquico from "./components/agrupamiento-jerarquico";
 import Agrupamientodbscan from "./components/agrupamiento-dbscan";
+import Importar from "./components/importar";
 import DateFnsUtils from "@date-io/date-fns";
 import { makeStyles } from "@material-ui/core/styles";
 import Select from "@material-ui/core/Select";
@@ -18,18 +18,26 @@ import {
   KeyboardDatePicker,
 } from "@material-ui/pickers";
 import { Typography, FormControl } from "@material-ui/core";
-import Axios from "axios";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Checkbox from "@material-ui/core/Checkbox";
-import { NavBtn, Button } from "./components/espacio-temporal/botones";
+import { NavBtnGenerar, Button } from "./components/espacio-temporal/botones";
 import clsx from "clsx";
+import {
+  Nav,
+  NavMenu,
+  NavBtn,
+  NavLink,
+  NavBtnLink,
+  NavDatos,
+} from "./components/Navbar/NavbarElements";
 
 const useStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
   },
   bold: {
-    fontWeight: 600,
+    fontWeight: 800,
+    color: "white",
   },
   paper1: {
     backgroundColor: "#ffffff",
@@ -97,25 +105,6 @@ const useStyles = makeStyles((theme) => ({
 
 function App() {
   const classes = useStyles();
-
-  /*const [state1,setState1] = React.useState({
-    fechaIni: 'Wed Mar 05 2020 20:51:01 GMT-0500',
-    fechaFin: 'Wed Sep 01 2021 20:00:01 GMT-0500',
-    algoritmo: 0,
-    departamentos: ['Todos','Amazonas','Áncash','Apurímac','Arequipa','Ayacucho','Cajamarca','Callao','Cusco',
-    'Huancavelica','Huánuco','Ica','Junín','La Libertad','Lambayeque','Lima','Loreto','Madre de Dios',
-    'Moquegua','Pasco','Piura','Puno','San Martín','Tacna','Tumbes','Ucayali']
-  })*/
-
-  /*const pasarDatos = React.useCallback((e)=>{
-    setState({
-      fechaIni: e.fechaIni,
-      fechaFin: e.fechaFin,
-      algoritmo: e.algoritmo,
-      departamentos: e.departamentos
-    })
-  },[setState]);*/
-
   const options = [
     { id_algoritmo: 0, nombre: "K-means" },
     { id_algoritmo: 1, nombre: "Jerárquico" },
@@ -165,15 +154,9 @@ function App() {
     fechaFin: finDate,
     algoritmo: algoritmo,
     departamentos: nombreDepartamentos,
-    cargandoMapa: true,
-    cargandoLineal: true,
-    cargandoCircular: true,
-    bandera: false,
   });
 
-  const [item1, setItem1] = React.useState();
-  const [item2, setItem2] = React.useState();
-  const [item3, setItem3] = React.useState();
+  const [graficos, setGraficos] = React.useState(false);
   const [kmeans, setKmeans] = React.useState(false);
   const [jerarquico, setJerarquico] = React.useState(false);
   const [dbscan, setDbscan] = React.useState(false);
@@ -182,7 +165,7 @@ function App() {
   const [mostrarkmeans, setMostrarKmeans] = React.useState(false);
   const [mostrarjerarquico, setMostrarJerarquico] = React.useState(false);
   const [mostrardbscan, setMostrarDbscan] = React.useState(false);
-  //const {pasarDatos} = props;
+
   const [isDisabled, setisDisabled] = React.useState(true);
 
   function handleChangeDepartamentos(name) {
@@ -252,44 +235,6 @@ function App() {
   const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}`;
 
   const click = () => {
-    setState((s) => ({ ...s, cargandoLineal: true }));
-    setState((s) => ({ ...s, cargandoMapa: true }));
-    setState((s) => ({ ...s, cargandoCircular: true }));
-    Axios.post(
-      `http://localhost:8000/graficolineal/?${params}`,
-      nombreDepartamentos
-    )
-      .then((response) => {
-        const val1 = response.data;
-        if (val1 === "No hay datos") {
-          setState((s) => ({ ...s, bandera: true }));
-        } else {
-          setState((s) => ({ ...s, bandera: false }));
-          setItem1(JSON.parse(val1));
-          setState((s) => ({ ...s, cargandoLineal: false }));
-        }
-      })
-      .catch((err) => console.log(err));
-
-    Axios.post(`http://localhost:8000/mapa/?${params}`, nombreDepartamentos)
-      .then((response) => {
-        const val = response.data;
-        setItem2(JSON.parse(val));
-        setState((s) => ({ ...s, cargandoMapa: false }));
-      })
-      .catch((err) => console.log(err));
-
-    Axios.post(
-      `http://localhost:8000/graficocircular/?${params}`,
-      nombreDepartamentos
-    )
-      .then((response) => {
-        const val1 = response.data;
-        setItem3(JSON.parse(val1));
-        setState((s) => ({ ...s, cargandoCircular: false }));
-      })
-      .catch((err) => console.log(err));
-
     if (state.algoritmo === 0) {
       setKmeans(kmeans ? false : true);
       setMostrarKmeans(true);
@@ -307,6 +252,7 @@ function App() {
       setMostrarDbscan(true);
     }
     setTabla(tabla ? false : true);
+    setGraficos(graficos ? false : true);
   };
 
   React.useEffect(() => {
@@ -314,135 +260,208 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [stateImportar, setStateImportar] = React.useState(true);
+
+  const boton = () => {
+    setStateImportar(stateImportar ? false : true);
+    console.log(stateImportar);
+  };
+
   return (
     <Router>
       <Helmet>
         <style>{"body { background-color: #F6F7FF; }"}</style>
       </Helmet>
-      <Navbar />
-      <section className="contenido wrapper">
-        <Grid item xs={12} sm={12}>
-          <Box className={classes.paper2} boxShadow={0}>
-            <Container maxWidth={false}>
-              <MuiPickersUtilsProvider utils={DateFnsUtils} locale={deLocale}>
-                <Grid
-                  container
-                  justifyContent="space-around"
-                  alignItems="stretch"
-                >
-                  <FormControl className={classes.formControl}>
-                    <Typography variant="subtitle2" htmlFor="name" align="left">
-                      Fecha Inicio
-                    </Typography>
-                    <KeyboardDatePicker
-                      disableToolbar
-                      minDate={"2020-03-06"}
-                      maxDate={"2021-09-02"}
-                      style={{ margin: "0%" }}
-                      inputProps={{ min: 0, style: { textAlign: "center" } }}
-                      variant="inline"
-                      format="dd/MM/yyyy"
-                      margin="normal"
-                      id="fecha-inicio"
-                      width="100%"
-                      value={inicioDate}
-                      onChange={handleInicioDateChange}
-                      KeyboardButtonProps={{ "roboto-label": "change date" }}
-                    />
-                  </FormControl>
-                  <FormControl className={classes.formControl}>
-                    <Typography variant="subtitle2" htmlFor="name" align="left">
-                      Fecha Fin
-                    </Typography>
-                    <KeyboardDatePicker
-                      disableToolbar
-                      minDate={"2020-03-05"}
-                      maxDate={"2021-09-02"}
-                      style={{ margin: "0%" }}
-                      variant="inline"
-                      format="dd/MM/yyyy"
-                      inputProps={{ min: 0, style: { textAlign: "center" } }}
-                      margin="normal"
-                      id="fecha-fin"
-                      value={finDate}
-                      onChange={handleFinDateChange}
-                      KeyboardButtonProps={{ "roboto-label": "change date" }}
-                    />
-                  </FormControl>
-                  <FormControl className={classes.formControl}>
-                    <Typography variant="subtitle2" htmlFor="name">
-                      Algoritmo de agrupamiento
-                    </Typography>
-                    <Select
-                      id="algoritmo-select"
-                      name="name"
-                      open={open}
-                      onClose={handleClose}
-                      onOpen={handleOpen}
-                      value={algoritmo}
-                      onChange={handleChange}
+      <Nav fixed="top">
+        <NavMenu>
+          <Typography variant="h5" noWrap className={classes.bold}>
+            Análisis de Secuencias Genómicas SARS-CoV-2 Perú
+          </Typography>
+          <NavLink>Actualizado el 01/09/2021</NavLink>
+          <NavDatos>
+            {" "}
+            Facilitado por datos de
+            <a
+              rel="noopener noreferrer"
+              href="https://www.gisaid.org"
+              target="_blank"
+            >
+              <img
+                src="https://www.gisaid.org/fileadmin/gisaid/img/schild.png"
+                alt="gisaid-logo"
+                width="60"
+              ></img>
+            </a>
+            .
+          </NavDatos>
+        </NavMenu>
+        <NavBtn onClick={boton}>
+          {stateImportar && (
+            <NavBtnLink to="/importar">Importar Datos</NavBtnLink>
+          )}
+          {!stateImportar && (
+            <NavBtnLink to="/graficos">Ver gráficos</NavBtnLink>
+          )}
+        </NavBtn>
+      </Nav>
+      <Switch>
+        <Route path="/graficos">
+          <section className="contenido wrapper">
+            <Grid item xs={12} sm={12}>
+              <Box className={classes.paper2} boxShadow={0}>
+                <Container maxWidth={false}>
+                  <MuiPickersUtilsProvider
+                    utils={DateFnsUtils}
+                    locale={deLocale}
+                  >
+                    <Grid
+                      container
+                      justifyContent="space-around"
+                      alignItems="stretch"
                     >
-                      {options.map((item, i) => (
-                        <MenuItem key={"algoritmo" + i} value={i}>
-                          {item.nombre}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <NavBtn>
-                    <Button onClick={click}>Generar</Button>
-                  </NavBtn>
-                </Grid>
-              </MuiPickersUtilsProvider>
-              <Typography variant="subtitle2" gutterBottom>
-                Departamentos:
-              </Typography>
-              <Grid container justifyContent="space-around" alignItems="center">
-                <Grid item xs={12}>
-                  {departamentos.map((name) => (
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          key={name}
-                          className={classes.root2}
-                          disableRipple
-                          defaultChecked={true}
-                          disabled={name === "Todos" ? false : isDisabled}
-                          onChange={() => handleChangeDepartamentos(name)}
-                          selected={nombreDepartamentos.includes(name)}
-                          checkedIcon={
-                            <span
-                              className={clsx(
-                                classes.icon,
-                                classes.checkedIcon
-                              )}
+                      <FormControl className={classes.formControl}>
+                        <Typography
+                          variant="subtitle2"
+                          htmlFor="name"
+                          align="left"
+                        >
+                          Fecha Inicio
+                        </Typography>
+                        <KeyboardDatePicker
+                          disableToolbar
+                          minDate={"2020-03-06"}
+                          maxDate={"2021-09-02"}
+                          style={{ margin: "0%" }}
+                          inputProps={{
+                            min: 0,
+                            style: { textAlign: "center" },
+                          }}
+                          variant="inline"
+                          format="dd/MM/yyyy"
+                          margin="normal"
+                          id="fecha-inicio"
+                          width="100%"
+                          value={inicioDate}
+                          onChange={handleInicioDateChange}
+                          KeyboardButtonProps={{
+                            "roboto-label": "change date",
+                          }}
+                        />
+                      </FormControl>
+                      <FormControl className={classes.formControl}>
+                        <Typography
+                          variant="subtitle2"
+                          htmlFor="name"
+                          align="left"
+                        >
+                          Fecha Fin
+                        </Typography>
+                        <KeyboardDatePicker
+                          disableToolbar
+                          minDate={"2020-03-05"}
+                          maxDate={"2021-09-02"}
+                          style={{ margin: "0%" }}
+                          variant="inline"
+                          format="dd/MM/yyyy"
+                          inputProps={{
+                            min: 0,
+                            style: { textAlign: "center" },
+                          }}
+                          margin="normal"
+                          id="fecha-fin"
+                          value={finDate}
+                          onChange={handleFinDateChange}
+                          KeyboardButtonProps={{
+                            "roboto-label": "change date",
+                          }}
+                        />
+                      </FormControl>
+                      <FormControl className={classes.formControl}>
+                        <Typography variant="subtitle2" htmlFor="name">
+                          Algoritmo de agrupamiento
+                        </Typography>
+                        <Select
+                          id="algoritmo-select"
+                          name="name"
+                          open={open}
+                          onClose={handleClose}
+                          onOpen={handleOpen}
+                          value={algoritmo}
+                          onChange={handleChange}
+                        >
+                          {options.map((item, i) => (
+                            <MenuItem key={"algoritmo" + i} value={i}>
+                              {item.nombre}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <NavBtnGenerar>
+                        <Button onClick={click}>Generar</Button>
+                      </NavBtnGenerar>
+                    </Grid>
+                  </MuiPickersUtilsProvider>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Departamentos:
+                  </Typography>
+                  <Grid
+                    container
+                    justifyContent="space-around"
+                    alignItems="center"
+                  >
+                    <Grid item xs={12}>
+                      {departamentos.map((name) => (
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              key={name}
+                              className={classes.root2}
+                              disableRipple
+                              defaultChecked={true}
+                              disabled={name === "Todos" ? false : isDisabled}
+                              onChange={() => handleChangeDepartamentos(name)}
+                              selected={nombreDepartamentos.includes(name)}
+                              checkedIcon={
+                                <span
+                                  className={clsx(
+                                    classes.icon,
+                                    classes.checkedIcon
+                                  )}
+                                />
+                              }
+                              icon={<span className={classes.icon} />}
+                              inputProps={{
+                                "aria-label": "decorative checkbox",
+                              }}
                             />
                           }
-                          icon={<span className={classes.icon} />}
-                          inputProps={{ "aria-label": "decorative checkbox" }}
+                          label={name}
                         />
-                      }
-                      label={name}
-                    />
-                  ))}
-                </Grid>
-              </Grid>
-            </Container>
-          </Box>
-        </Grid>
-        <EspacioTiempo
-          estado={state}
-          item1={item1}
-          item2={item2}
-          item3={item3}
-        />
-        <Tabla estado={state} tabla={tabla}></Tabla>
-        {mostrarkmeans && <Agrupamientokmeans estado={state} kmeans={kmeans} />}
-        {mostrarjerarquico && (
-          <Agrupamientojerarquico estado={state} jerarquico={jerarquico} />
-        )}
-        {mostrardbscan && <Agrupamientodbscan estado={state} dbscan={dbscan} />}
-      </section>
+                      ))}
+                    </Grid>
+                  </Grid>
+                </Container>
+              </Box>
+            </Grid>
+            <EspacioTiempo estado={state} grafico={graficos} />
+            <Tabla estado={state} tabla={tabla}></Tabla>
+            {mostrarkmeans && (
+              <Agrupamientokmeans estado={state} kmeans={kmeans} />
+            )}
+            {mostrarjerarquico && (
+              <Agrupamientojerarquico estado={state} jerarquico={jerarquico} />
+            )}
+            {mostrardbscan && (
+              <Agrupamientodbscan estado={state} dbscan={dbscan} />
+            )}
+          </section>
+        </Route>
+        <Route path="/importar">
+          <section className="contenido wrapper">
+            <Importar />
+          </section>
+        </Route>
+      </Switch>
     </Router>
   );
 }
