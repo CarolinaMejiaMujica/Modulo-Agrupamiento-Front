@@ -107,7 +107,7 @@ const columns = [
   },
   {
     id: "cluster",
-    label: "N° Cluster",
+    label: "N° de cluster",
     minWidth: 170,
     align: "center",
     background: "#FFFFFF",
@@ -216,7 +216,7 @@ const Agrupamientodbscan = ({ estado, dbscan }) => {
   const [cargando, setCargando] = React.useState(true);
   const [bandera, setBandera] = React.useState(false);
 
-  const [value, setValue] = React.useState(6);
+  const [value, setValue] = React.useState(0.4);
   const handleChange = (event, newValue) => {
     if (typeof newValue === "number") {
       setValue(newValue);
@@ -226,7 +226,7 @@ const Agrupamientodbscan = ({ estado, dbscan }) => {
   const grafdbscan = () => {
     setCargando(true);
     const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${value}`;
-    Axios.post(`http://localhost:8000/graficokmeans/?${params}`, deps)
+    Axios.post(`http://3.86.154.241/graficodbscan/?${params}`, deps)
       .then((response) => {
         const val1 = response.data;
         if (val1 === "No hay datos") {
@@ -235,9 +235,9 @@ const Agrupamientodbscan = ({ estado, dbscan }) => {
           setBandera(false);
           const item = JSON.parse(val1[0]);
           setDatos(val1[1]);
-          const element = document.getElementById("graficokmeans");
+          const element = document.getElementById("graficodbscan");
           if (element) element.removeChild(element.firstChild);
-          window.Bokeh.embed.embed_item(item, "graficokmeans");
+          window.Bokeh.embed.embed_item(item, "graficodbscan");
           setCargando(false);
         }
       })
@@ -247,7 +247,6 @@ const Agrupamientodbscan = ({ estado, dbscan }) => {
 
   React.useEffect(() => {
     grafdbscan();
-    console.log(value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dbscan, value]);
 
@@ -310,9 +309,9 @@ const Agrupamientodbscan = ({ estado, dbscan }) => {
                   <Slider
                     id="Slider"
                     value={value}
-                    min={2}
-                    step={1}
-                    max={6}
+                    min={0.1}
+                    step={0.1}
+                    max={0.5}
                     getAriaValueText={valueLabelFormat}
                     valueLabelFormat={valueLabelFormat}
                     onChange={handleChange}
@@ -322,7 +321,7 @@ const Agrupamientodbscan = ({ estado, dbscan }) => {
                 </Grid>
                 {cargando && <Cargando />}
                 {!cargando && (
-                  <Dbscan id="graficokmeans" className="bk-root"></Dbscan>
+                  <Dbscan id="graficodbscan" className="bk-root"></Dbscan>
                 )}
               </Grid>
               <Grid item xs={6} sm={4} className={classes.grid2}>

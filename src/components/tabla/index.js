@@ -174,7 +174,7 @@ const Tabla = ({ estado, tabla }) => {
   const [bandera, setBandera] = React.useState(false);
 
   React.useEffect(() => {
-    Axios.post(`http://localhost:8000/tablaespacio/?${params}`, deps)
+    Axios.post(`http://3.86.154.241/tablaespacio/?${params}`, deps)
       .then((response) => {
         const val1 = response.data;
         if (val1 === "No hay datos") {

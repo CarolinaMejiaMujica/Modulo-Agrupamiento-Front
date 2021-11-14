@@ -10,7 +10,6 @@ import {
 import { Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import Importar from "../importar";
 
 const useStyles = makeStyles((theme) => ({
   bold: {
@@ -27,7 +26,7 @@ const Navbar = () => {
         <Typography variant="h5" noWrap className={classes.bold}>
           Análisis de Secuencias Genómicas SARS-CoV-2 Perú
         </Typography>
-        <NavLink>Actualizado el 01/09/2021</NavLink>
+        <NavLink>Actualizado el 15/10/2021</NavLink>
         <NavDatos>
           {" "}
           Facilitado por datos de
@@ -47,7 +46,7 @@ const Navbar = () => {
       </NavMenu>
       <Router>
         <NavBtn>
-          <NavBtnLink to="/importar">Importar Datos</NavBtnLink>
+          <NavBtnLink to="/graficos">Importar Datos</NavBtnLink>
         </NavBtn>
       </Router>
     </Nav>

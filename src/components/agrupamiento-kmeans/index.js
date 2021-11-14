@@ -74,7 +74,7 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: "20px",
   },
   p: {
-    marginRight: "10px",
+    marginRight: "20px",
   },
   pagination: {
     paddingLeft: "800px",
@@ -108,7 +108,7 @@ const columns = [
   },
   {
     id: "cluster",
-    label: "N° Cluster",
+    label: "N° de cluster",
     minWidth: 170,
     align: "center",
     background: "#FFFFFF",
@@ -228,7 +228,7 @@ const Agrupamientokmeans = ({ estado, kmeans }) => {
   const grafkmeans = () => {
     setCargando(true);
     const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${value}`;
-    Axios.post(`http://localhost:8000/graficokmeans/?${params}`, deps)
+    Axios.post(`http://3.86.154.241/graficokmeans/?${params}`, deps)
       .then((response) => {
         const val1 = response.data;
         if (val1 === "No hay datos") {
@@ -249,7 +249,6 @@ const Agrupamientokmeans = ({ estado, kmeans }) => {
 
   React.useEffect(() => {
     grafkmeans();
-    console.log(value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kmeans, value]);
 
@@ -357,9 +356,9 @@ const Agrupamientokmeans = ({ estado, kmeans }) => {
                       <Table stickyHeader aria-label="sticky table">
                         <TableHead>
                           <TableRow>
-                            {columns.map((column) => (
+                            {columns.map((column, index) => (
                               <TableCell
-                                key={column.id}
+                                key={index}
                                 align={column.align}
                                 style={{ minWidth: column.minWidth }}
                               >

@@ -5,7 +5,6 @@ import { Typography } from "@material-ui/core";
 import { Jerarquico } from "./graficos";
 import Axios from "axios";
 import Cargando from "./cargando";
-//import Paper from "@material-ui/core/Paper";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -25,6 +24,7 @@ import { Btn } from "../tabla/descargarboton";
 import * as FileSaver from "file-saver";
 import * as XLSX from "xlsx";
 import Slider from "@mui/material/Slider";
+import dendrograma from "./dendrograma.png";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -70,16 +70,23 @@ const useStyles = makeStyles((theme) => ({
     margin: "20px",
   },
   slider: {
-    width: "600px",
+    marginLeft: "20px",
   },
   p: {
-    marginBottom: "10px",
+    marginRight: "20px",
   },
   pagination: {
     paddingLeft: "800px",
   },
   container: {
     maxHeight: 440,
+  },
+  image: {
+    paddingTop: "20px",
+    width: "95%",
+    height: "600px",
+    justifyContent: "center",
+    alignItems: "center",
   },
 }));
 
@@ -107,7 +114,7 @@ const columns = [
   },
   {
     id: "cluster",
-    label: "N° Cluster",
+    label: "N° de cluster",
     minWidth: 170,
     align: "center",
     background: "#FFFFFF",
@@ -210,7 +217,6 @@ const Agrupamientojerarquico = ({ estado, jerarquico }) => {
   const fechaIni = convert(estado.fechaIni);
   const fechaFin = convert(estado.fechaFin);
   const deps = estado.departamentos;
-  //const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${6}`;
 
   const [datos, setDatos] = React.useState([]);
   const [cargando, setCargando] = React.useState(true);
@@ -225,8 +231,8 @@ const Agrupamientojerarquico = ({ estado, jerarquico }) => {
 
   const grafJerarquico = () => {
     setCargando(true);
-    const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${6}`;
-    Axios.post(`http://localhost:8000/graficojerarquico/?${params}`, deps)
+    const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${value}`;
+    Axios.post(`http://3.86.154.241/graficojerarquico/?${params}`, deps)
       .then((response) => {
         const val1 = response.data;
         if (val1 === "No hay datos") {
@@ -247,45 +253,48 @@ const Agrupamientojerarquico = ({ estado, jerarquico }) => {
 
   React.useEffect(() => {
     grafJerarquico();
-    console.log(value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jerarquico, value]);
 
-  /*const [dendrograma, setDendrograma] = React.useState({
-    isLoaded: false,
-    content: "a",
-  });
-  const [cargandodendrograma, setCargandodendrograma] = React.useState(true);
-  const payload = {};*/
+  const [url, setUrl] = React.useState("");
 
-  /*if (props.estado.valor === 1) {
-    const fechaIni = convert(props.estado.fechaIni);
-    const fechaFin = convert(props.estado.fechaFin);
-    const deps = props.estado.departamentos;
-    const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${6}`;
+  const grafDendrograma = () => {
     setCargando(true);
-    Axios.post(`http://localhost:8000/graficojerarquico/?${params}`, deps)
+    const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}`;
+
+    Axios.post(`http://3.86.154.241/dendrograma/?${params}`, deps)
       .then((response) => {
         const val1 = response.data;
         if (val1 === "No hay datos") {
           setBandera(true);
         } else {
           setBandera(false);
-          const item = JSON.parse(val1[0]);
-          setDatos(val1[1]);
-          window.Bokeh.embed.embed_item(item, "graficojerarquico");
+          var params2 = { Bucket: "dendrograma", Key: "dendrograma.png" };
+          const aws = require("aws-sdk");
+          aws.config.setPromisesDependency();
+          aws.config.update({
+            accessKeyId: "ASIAQIMIDAYLIAIJRBIL",
+            secretAccessKey: "vjgDk5H3jn/F1XXexLV7QmYrj5J6ixn5PF7WylPx",
+            sessionToken:
+              "FwoGZXIvYXdzEJj//////////wEaDJdI37aw9RJ4l7oC4CLJAVZZs7wb9n+y4VVRZa+4Cvj9wE6lsYvLotoBYOrgxzogHeW0AkWdBjEkGV3NqKMTvmtS8TO4wJYgY2KfXd31yO2tqzYuheKVSNM5AawoD9MeEG+gAFMNRuTTzQyFJ/HcqnT5XnHgNL0EYHjB1wT4vIYcZv4fDX3NNupxA0XfR1cr2XknID+B+QZ2DYdPYz64DHdm4o4OryNkszt6B3E/Hm+mE1WUXDyDmPts1ckkRd097mJqLlVQnNg69020v3OayQLPGpq7mBjuqiiSxL2MBjItG7OAX5e+3U2sn8SQk1CBffj6zkjjnuh37KJrI/YMGWPUY8Q45JOZYlqlCEov",
+            region: "us-east-1",
+          });
+          const s3 = new aws.S3();
+          var url_s3 = s3.getSignedUrl("getObject", params2);
+          setUrl(url_s3);
           setCargando(false);
         }
       })
-      .catch((err) => console.log(err));
-  }*/
+      .catch((err) => {
+        console.log(err);
+      });
+    // eslint-disable-next-line
+  };
 
-  /*const [state, setState] = React.useState({ x: 6 });
-  function range() {}
-  const updateRange = (x) => {
-    setState(x);
-    console.log(x);
-  };*/
+  React.useEffect(() => {
+    grafDendrograma();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jerarquico]);
 
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -325,7 +334,7 @@ const Agrupamientojerarquico = ({ estado, jerarquico }) => {
                 Jerárquico
               </Typography>
               <Grid container>
-                <Grid item xs={6} sm={6} className={classes.grid}>
+                <Grid item xs={6} sm={7} className={classes.grid}>
                   <Typography
                     variant="subtitle1"
                     align="left"
@@ -364,7 +373,7 @@ const Agrupamientojerarquico = ({ estado, jerarquico }) => {
                     ></Jerarquico>
                   )}
                 </Grid>
-                <Grid item xs={6} sm={6} className={classes.grid2}>
+                <Grid item xs={6} sm={5} className={classes.grid2}>
                   <Typography
                     variant="subtitle1"
                     align="left"
@@ -372,6 +381,15 @@ const Agrupamientojerarquico = ({ estado, jerarquico }) => {
                   >
                     Dendrograma
                   </Typography>
+                  <p>
+                    Se muestra una representación gráfica de las distancias
+                    entre las secuencias genómicas SARS-CoV-2 en un dendrograma.
+                  </p>
+                  <img
+                    src={dendrograma}
+                    alt="dendrograma"
+                    className={classes.image}
+                  />
                 </Grid>
               </Grid>
             </Box>
@@ -395,7 +413,7 @@ const Agrupamientojerarquico = ({ estado, jerarquico }) => {
             </Grid>
             <p className={classes.p}>
               Se muestra la información de las secuencias genómicas agrupadas
-              con el algoritmo k-means en el gráfico de la izquierda.
+              con el algoritmo jerárquico en el gráfico superior.
             </p>
             {cargando && <Cargando />}
             {!cargando && (

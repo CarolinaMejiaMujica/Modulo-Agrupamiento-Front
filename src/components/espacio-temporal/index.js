@@ -5,24 +5,20 @@ import { Box, Grid } from "@material-ui/core";
 import { Typography } from "@material-ui/core";
 import { Mapa, Tiempo } from "./graficos";
 import Cargando from "./cargando";
+import CargandoCantidad from "./cargandoCantidad";
 import Axios from "axios";
-/*import {
-  MuiPickersUtilsProvider,
-  KeyboardDatePicker,
-} from "@material-ui/pickers";
-import { NavBtn, Button } from "./botones";
-import PropTypes from "prop-types";
-import Axios from "axios";
-import DateFnsUtils from "@date-io/date-fns";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Select from "@material-ui/core/Select";
-import deLocale from "date-fns/locale/es";
-import Checkbox from "@material-ui/core/Checkbox";
-import clsx from "clsx";*/
 
 const useStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
+  },
+  cantidad: {
+    paddingTop: "5px",
+    color: "#49DA2B",
+  },
+  cantidad2: {
+    paddingTop: "5px",
+    color: "#DA432B",
   },
   bold: {
     fontWeight: 600,
@@ -104,21 +100,37 @@ const EspacioTiempo = ({ estado, grafico }) => {
   const fechaIni = convert(estado.fechaIni);
   const fechaFin = convert(estado.fechaFin);
   const deps = estado.departamentos;
-  //const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}&parametro=${value}`;
 
   const [bandera, setBandera] = React.useState(false);
   const [cargandoCircular, setCargandoCircular] = React.useState(true);
   const [cargandoLineal, setCargandoLineal] = React.useState(true);
   const [cargandoMapa, setCargandoMapa] = React.useState(true);
 
-  //const { cargandoCircular, cargandoLineal, cargandoMapa, bandera } = estado;
+  const [cantidadAnalisis, setCantidadAnalisis] = React.useState(0);
+  const [cantidadTotal, setCantidadTotal] = React.useState(0);
+  const [cargandoCantidadAnalisis, setCargandoCantidadAnalisis] =
+    React.useState(true);
+  const [cargandoCantidadTotal, setCargandoCantidadTotal] =
+    React.useState(true);
 
   const graficos = () => {
     setCargandoCircular(true);
     setCargandoLineal(true);
     setCargandoMapa(true);
+    setCargandoCantidadAnalisis(true);
+    setCargandoCantidadTotal(true);
+
+    Axios.post(`http://3.86.154.241/cantidades/`).then((response) => {
+      const val1 = response.data;
+      setCantidadAnalisis(val1["cantidadAnalisis"]);
+      setCantidadTotal(val1["cantidadTotal"]);
+      setBandera(false);
+      setCargandoCantidadAnalisis(false);
+      setCargandoCantidadTotal(false);
+    });
+
     const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}`;
-    Axios.post(`http://localhost:8000/graficolineal/?${params}`, deps)
+    Axios.post(`http://3.86.154.241/graficolineal/?${params}`, deps)
       .then((response) => {
         const val1 = response.data;
         if (val1 === "No hay datos") {
@@ -133,7 +145,7 @@ const EspacioTiempo = ({ estado, grafico }) => {
         }
       })
       .catch((err) => console.log(err));
-    Axios.post(`http://localhost:8000/mapa/?${params}`, deps)
+    Axios.post(`http://3.86.154.241/mapa/?${params}`, deps)
       .then((response) => {
         const val1 = response.data;
         if (val1 === "No hay datos") {
@@ -148,7 +160,7 @@ const EspacioTiempo = ({ estado, grafico }) => {
         }
       })
       .catch((err) => console.log(err));
-    Axios.post(`http://localhost:8000/graficocircular/?${params}`, deps)
+    Axios.post(`http://3.86.154.241/graficocircular/?${params}`, deps)
       .then((response) => {
         const val1 = response.data;
         if (val1 === "No hay datos") {
@@ -171,42 +183,6 @@ const EspacioTiempo = ({ estado, grafico }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grafico]);
 
-  /*React.useEffect(() => {
-    if (item1) {
-      const element = document.getElementById("graficolineal");
-      //if (element) element.removeChild(element.firstChild);
-      window.Bokeh.embed.embed_item(item1, "graficolineal");
-    }
-  }, [item1]);
-
-  React.useEffect(() => {
-    if (item2) {
-      const element = document.getElementById("mapa");
-      //if (element) element.removeChild(element.firstChild);
-      window.Bokeh.embed.embed_item(item2, "mapa");
-    }
-  }, [item2]);
-
-  React.useEffect(() => {
-    if (item3) {
-      const element = document.getElementById("graficocircular");
-      //if (element) element.removeChild(element.firstChild);
-      window.Bokeh.embed.embed_item(item3, "graficocircular");
-    }
-  }, [item3]);*/
-
-  /*const click = React.useCallback(()=>{
-      if (pasarDatos){
-        pasarDatos(state);
-      }
-      
-    },[pasarDatos,setBandera,setCargandoLineal,setCargandoMapa,setCargandoCircular,nombreDepartamentos,params,state]);*/
-
-  /*React.useEffect(() => {
-      click();
-      console.log("hola");
-    },[click]);*/
-
   return (
     <Grid container>
       {!bandera && (
@@ -221,15 +197,67 @@ const EspacioTiempo = ({ estado, grafico }) => {
             </Box>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <Box className={classes.paper1} boxShadow={0} height={650}>
-              <Typography variant="h6" align="center" className={classes.bold}>
-                Porcentaje de variantes identificadas en el tiempo
-              </Typography>
-              {cargandoCircular && <Cargando />}
-              {!cargandoCircular && (
-                <Tiempo id="graficocircular" className="bk-root"></Tiempo>
-              )}
-            </Box>
+            <Grid container>
+              <Grid item xs={12} sm={6}>
+                <Box className={classes.paper1} boxShadow={0} height={150}>
+                  <Typography
+                    variant="subtitle1"
+                    align="center"
+                    className={classes.bold}
+                  >
+                    Cantidad de secuencias genómicas SARS-CoV-2 obtenidas de
+                    GISAID
+                  </Typography>
+                  {cargandoCantidadTotal && <CargandoCantidad />}
+                  {!cargandoCantidadTotal && (
+                    <Typography
+                      variant="h3"
+                      align="center"
+                      className={classes.cantidad}
+                    >
+                      {cantidadTotal}
+                    </Typography>
+                  )}
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Box className={classes.paper1} boxShadow={0} height={150}>
+                  <Typography
+                    variant="subtitle1"
+                    align="center"
+                    className={classes.bold}
+                  >
+                    Cantidad de secuencias genómicas SARS-CoV-2 utilizadas en el
+                    análisis
+                  </Typography>
+                  {cargandoCantidadAnalisis && <CargandoCantidad />}
+                  {!cargandoCantidadAnalisis && (
+                    <Typography
+                      variant="h3"
+                      align="center"
+                      className={classes.cantidad2}
+                    >
+                      {cantidadAnalisis}
+                    </Typography>
+                  )}
+                </Box>
+              </Grid>
+            </Grid>
+            <Grid item xs={12} sm={12}>
+              <Box className={classes.paper1} boxShadow={0} height={480}>
+                <Typography
+                  variant="h6"
+                  align="center"
+                  className={classes.bold}
+                >
+                  Distribución de secuencias genómicas SARS-CoV-2 por variantes
+                </Typography>
+                {cargandoCircular && <Cargando />}
+                {!cargandoCircular && (
+                  <Mapa id="graficocircular" className="bk-root"></Mapa>
+                )}
+              </Box>
+            </Grid>
           </Grid>
           <Grid item xs={12} sm={12}>
             <Box className={classes.paper1} boxShadow={0} height={750}>
@@ -256,9 +284,5 @@ const EspacioTiempo = ({ estado, grafico }) => {
     </Grid>
   );
 };
-
-/*EspacioTiempo.propTypes = {
-  pasarDatos: PropTypes.func.isRequired,
-};*/
 
 export default EspacioTiempo;

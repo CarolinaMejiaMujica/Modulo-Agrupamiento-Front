@@ -2,12 +2,16 @@ import React from "react";
 import "./App.css";
 import { Helmet } from "react-helmet";
 import EspacioTiempo from "./components/espacio-temporal";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Redirect,
+} from "react-router-dom";
 import Tabla from "./components/tabla";
 import Agrupamientokmeans from "./components/agrupamiento-kmeans";
 import Agrupamientojerarquico from "./components/agrupamiento-jerarquico";
 import Agrupamientodbscan from "./components/agrupamiento-dbscan";
-import Importar from "./components/importar";
 import DateFnsUtils from "@date-io/date-fns";
 import { makeStyles } from "@material-ui/core/styles";
 import Select from "@material-ui/core/Select";
@@ -18,10 +22,12 @@ import {
   KeyboardDatePicker,
 } from "@material-ui/pickers";
 import { Typography, FormControl } from "@material-ui/core";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Checkbox from "@material-ui/core/Checkbox";
+import Checkbox from "@mui/material/Checkbox";
+import TextField from "@mui/material/TextField";
+import Autocomplete from "@mui/material/Autocomplete";
+import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { NavBtnGenerar, Button } from "./components/espacio-temporal/botones";
-import clsx from "clsx";
 import {
   Nav,
   NavMenu,
@@ -31,7 +37,10 @@ import {
   NavDatos,
 } from "./components/Navbar/NavbarElements";
 
+const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
+const checkedIcon = <CheckBoxIcon fontSize="small" />;
 const useStyles = makeStyles((theme) => ({
+  subtitle2: { paddingTop: "10px" },
   root: {
     flexGrow: 1,
   },
@@ -103,57 +112,59 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const options = [
+  { id_algoritmo: 0, nombre: "K-means" },
+  { id_algoritmo: 1, nombre: "Jerárquico" },
+  { id_algoritmo: 2, nombre: "DBSCAN" },
+];
+const departamentos = [
+  "Todos",
+  "Amazonas",
+  "Áncash",
+  "Apurímac",
+  "Arequipa",
+  "Ayacucho",
+  "Cajamarca",
+  "Callao",
+  "Cusco",
+  "Huancavelica",
+  "Huánuco",
+  "Ica",
+  "Junín",
+  "La Libertad",
+  "Lambayeque",
+  "Lima",
+  "Loreto",
+  "Madre de Dios",
+  "Moquegua",
+  "Pasco",
+  "Piura",
+  "Puno",
+  "San Martín",
+  "Tacna",
+  "Tumbes",
+  "Ucayali",
+];
 function App() {
   const classes = useStyles();
-  const options = [
-    { id_algoritmo: 0, nombre: "K-means" },
-    { id_algoritmo: 1, nombre: "Jerárquico" },
-    { id_algoritmo: 2, nombre: "DBSCAN" },
-  ];
-  const departamentos = [
-    "Todos",
-    "Amazonas",
-    "Áncash",
-    "Apurímac",
-    "Arequipa",
-    "Ayacucho",
-    "Cajamarca",
-    "Callao",
-    "Cusco",
-    "Huancavelica",
-    "Huánuco",
-    "Ica",
-    "Junín",
-    "La Libertad",
-    "Lambayeque",
-    "Lima",
-    "Loreto",
-    "Madre de Dios",
-    "Moquegua",
-    "Pasco",
-    "Piura",
-    "Puno",
-    "San Martín",
-    "Tacna",
-    "Tumbes",
-    "Ucayali",
-  ];
+
+  const [departamentosCompleto, setDepartamentosCompleto] =
+    React.useState(true);
 
   const [inicioDate, setInicioDate] = React.useState(
-    "Wed Mar 05 2020 20:51:01 GMT-0500"
+    "Mon Apr 06 2020 20:51:01 GMT-0500"
   );
   const [finDate, setFinDate] = React.useState(
-    "Wed Sep 01 2021 20:00:01 GMT-0500"
+    "Fri Oct 15 2021 20:00:01 GMT-0500"
   );
   const [algoritmo, setAlgoritmo] = React.useState(0);
   const [open, setOpen] = React.useState(false);
-  const [nombreDepartamentos] = React.useState(departamentos);
 
   const [state, setState] = React.useState({
     fechaIni: inicioDate,
     fechaFin: finDate,
     algoritmo: algoritmo,
-    departamentos: nombreDepartamentos,
+    departamentos: departamentos,
   });
 
   const [graficos, setGraficos] = React.useState(false);
@@ -165,28 +176,6 @@ function App() {
   const [mostrarkmeans, setMostrarKmeans] = React.useState(false);
   const [mostrarjerarquico, setMostrarJerarquico] = React.useState(false);
   const [mostrardbscan, setMostrarDbscan] = React.useState(false);
-
-  const [isDisabled, setisDisabled] = React.useState(true);
-
-  function handleChangeDepartamentos(name) {
-    const find = nombreDepartamentos.indexOf(name);
-    if (name === "Todos" && nombreDepartamentos.includes(name)) {
-      nombreDepartamentos.splice(find, 1);
-      setisDisabled(false);
-      return;
-    }
-    if (find > -1) {
-      nombreDepartamentos.splice(find, 1);
-    } else {
-      if (name === "Todos") {
-        setisDisabled(true);
-        nombreDepartamentos.push(name);
-        //setNombreDepartamentos(departamentos);
-        return;
-      }
-      nombreDepartamentos.push(name);
-    }
-  }
 
   const handleInicioDateChange = (date) => {
     setInicioDate(date);
@@ -206,7 +195,6 @@ function App() {
       departamentos: state.departamentos,
     });
   };
-
   const handleChange = (event) => {
     setAlgoritmo(event.target.value);
     setState({
@@ -222,17 +210,6 @@ function App() {
   const handleOpen = () => {
     setOpen(true);
   };
-
-  const convert = React.useCallback((str) => {
-    var date = new Date(str);
-    var mnth = ("0" + (date.getMonth() + 1)).slice(-2);
-    var day = ("0" + date.getDate()).slice(-2);
-    return [date.getFullYear(), mnth, day].join("-");
-  }, []);
-
-  const fechaIni = convert(state.fechaIni);
-  const fechaFin = convert(state.fechaFin);
-  const params = `fechaIni=${fechaIni}&fechaFin=${fechaFin}`;
 
   const click = () => {
     if (state.algoritmo === 0) {
@@ -264,7 +241,6 @@ function App() {
 
   const boton = () => {
     setStateImportar(stateImportar ? false : true);
-    console.log(stateImportar);
   };
 
   return (
@@ -272,40 +248,36 @@ function App() {
       <Helmet>
         <style>{"body { background-color: #F6F7FF; }"}</style>
       </Helmet>
-      <Nav fixed="top">
-        <NavMenu>
-          <Typography variant="h5" noWrap className={classes.bold}>
-            Análisis de Secuencias Genómicas SARS-CoV-2 Perú
-          </Typography>
-          <NavLink>Actualizado el 01/09/2021</NavLink>
-          <NavDatos>
-            {" "}
-            Facilitado por datos de
-            <a
-              rel="noopener noreferrer"
-              href="https://www.gisaid.org"
-              target="_blank"
-            >
-              <img
-                src="https://www.gisaid.org/fileadmin/gisaid/img/schild.png"
-                alt="gisaid-logo"
-                width="60"
-              ></img>
-            </a>
-            .
-          </NavDatos>
-        </NavMenu>
-        <NavBtn onClick={boton}>
-          {stateImportar && (
-            <NavBtnLink to="/importar">Importar Datos</NavBtnLink>
-          )}
-          {!stateImportar && (
-            <NavBtnLink to="/graficos">Ver gráficos</NavBtnLink>
-          )}
-        </NavBtn>
-      </Nav>
       <Switch>
+        <Route exact path="/" render={() => <Redirect to="/graficos" />} />
         <Route path="/graficos">
+          <Nav fixed="top">
+            <NavMenu>
+              <Typography variant="h5" noWrap className={classes.bold}>
+                Análisis de Secuencias Genómicas SARS-CoV-2 Perú
+              </Typography>
+              <NavLink>Actualizado el 15/10/2021</NavLink>
+              <NavDatos>
+                {" "}
+                Facilitado por datos de
+                <a
+                  rel="noopener noreferrer"
+                  href="https://www.gisaid.org"
+                  target="_blank"
+                >
+                  <img
+                    src="https://www.gisaid.org/fileadmin/gisaid/img/schild.png"
+                    alt="gisaid-logo"
+                    width="60"
+                  ></img>
+                </a>
+                .
+              </NavDatos>
+            </NavMenu>
+            <NavBtn onClick={boton}>
+              <NavBtnLink to="/graficos">Importar Datos</NavBtnLink>
+            </NavBtn>
+          </Nav>
           <section className="contenido wrapper">
             <Grid item xs={12} sm={12}>
               <Box className={classes.paper2} boxShadow={0}>
@@ -329,8 +301,8 @@ function App() {
                         </Typography>
                         <KeyboardDatePicker
                           disableToolbar
-                          minDate={"2020-03-06"}
-                          maxDate={"2021-09-02"}
+                          minDate={"2020-04-07"}
+                          maxDate={"2021-10-16"}
                           style={{ margin: "0%" }}
                           inputProps={{
                             min: 0,
@@ -358,8 +330,8 @@ function App() {
                         </Typography>
                         <KeyboardDatePicker
                           disableToolbar
-                          minDate={"2020-03-05"}
-                          maxDate={"2021-09-02"}
+                          minDate={"2020-04-07"}
+                          maxDate={"2021-10-16"}
                           style={{ margin: "0%" }}
                           variant="inline"
                           format="dd/MM/yyyy"
@@ -401,7 +373,11 @@ function App() {
                       </NavBtnGenerar>
                     </Grid>
                   </MuiPickersUtilsProvider>
-                  <Typography variant="subtitle2" gutterBottom>
+                  <Typography
+                    variant="subtitle2"
+                    gutterBottom
+                    className={classes.subtitle2}
+                  >
                     Departamentos:
                   </Typography>
                   <Grid
@@ -410,39 +386,83 @@ function App() {
                     alignItems="center"
                   >
                     <Grid item xs={12}>
-                      {departamentos.map((name) => (
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              key={name}
-                              className={classes.root2}
-                              disableRipple
-                              defaultChecked={true}
-                              disabled={name === "Todos" ? false : isDisabled}
-                              onChange={() => handleChangeDepartamentos(name)}
-                              selected={nombreDepartamentos.includes(name)}
-                              checkedIcon={
-                                <span
-                                  className={clsx(
-                                    classes.icon,
-                                    classes.checkedIcon
-                                  )}
-                                />
-                              }
-                              icon={<span className={classes.icon} />}
-                              inputProps={{
-                                "aria-label": "decorative checkbox",
-                              }}
-                            />
+                      <Autocomplete
+                        value={state.departamentos}
+                        id="departamentos"
+                        multiple
+                        options={departamentos}
+                        disableCloseOnSelect
+                        getOptionLabel={(option) => option}
+                        onChange={(event, newValue) => {
+                          if (
+                            newValue.includes("Todos") &&
+                            departamentosCompleto === true
+                          ) {
+                            var index = newValue.indexOf("Todos");
+                            if (index !== -1) {
+                              newValue.splice(index, 1);
+                            }
+                            setState({
+                              fechaIni: state.fechaIni,
+                              fechaFin: state.fechaFin,
+                              algoritmo: state.algoritmo,
+                              departamentos: newValue,
+                            });
+                          } else if (
+                            newValue.includes("Todos") &&
+                            departamentosCompleto === false
+                          ) {
+                            setState({
+                              fechaIni: state.fechaIni,
+                              fechaFin: state.fechaFin,
+                              algoritmo: state.algoritmo,
+                              departamentos: departamentos,
+                            });
+                            setDepartamentosCompleto(true);
+                          } else if (newValue.length === 0) {
+                            setState({
+                              fechaIni: state.fechaIni,
+                              fechaFin: state.fechaFin,
+                              algoritmo: state.algoritmo,
+                              departamentos: [],
+                            });
+                            setDepartamentosCompleto(false);
+                          } else {
+                            setState({
+                              fechaIni: state.fechaIni,
+                              fechaFin: state.fechaFin,
+                              algoritmo: state.algoritmo,
+                              departamentos: newValue,
+                            });
+                            setDepartamentosCompleto(false);
                           }
-                          label={name}
-                        />
-                      ))}
+                        }}
+                        renderOption={(props, option, { selected }) => (
+                          <li {...props}>
+                            <Checkbox
+                              icon={icon}
+                              checkedIcon={checkedIcon}
+                              style={{ marginRight: 8 }}
+                              checked={selected}
+                            />
+                            {option}
+                          </li>
+                        )}
+                        style={{
+                          width: "100%",
+                          paddingTop: 10,
+                          paddingBottom: 10,
+                        }}
+                        renderInput={(params) => (
+                          <TextField {...params} placeholder="Departamento" />
+                        )}
+                      />
                     </Grid>
                   </Grid>
                 </Container>
               </Box>
             </Grid>
+
             <EspacioTiempo estado={state} grafico={graficos} />
             <Tabla estado={state} tabla={tabla}></Tabla>
             {mostrarkmeans && (
@@ -454,11 +474,6 @@ function App() {
             {mostrardbscan && (
               <Agrupamientodbscan estado={state} dbscan={dbscan} />
             )}
-          </section>
-        </Route>
-        <Route path="/importar">
-          <section className="contenido wrapper">
-            <Importar />
           </section>
         </Route>
       </Switch>
